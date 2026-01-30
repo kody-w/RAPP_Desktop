@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAPP Desktop - Install</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-tertiary: #2d2d44;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --accent-purple: #8b5cf6;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+            --border: #3d3d5c;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .hero-icon {
+            font-size: 5rem;
+            margin-bottom: 1.5rem;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tagline {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+        }
+
+        .install-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .install-section h2 {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .platform-icon {
+            font-size: 2rem;
+        }
+
+        .code-block {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1rem 1.25rem;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--accent-cyan);
+            overflow-x: auto;
+            position: relative;
+            margin-bottom: 1rem;
+        }
+
+        .copy-btn {
+            position: absolute;
+            right: 0.5rem;
+            top: 0.5rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 0.35rem 0.75rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.15s;
+        }
+
+        .copy-btn:hover {
+            background: var(--accent-purple);
+            color: white;
+            border-color: var(--accent-purple);
+        }
+
+        .copy-btn.copied {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+            color: white;
+        }
+
+        .note {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 1rem;
+        }
+
+        .note strong {
+            color: var(--accent-purple);
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 3rem 0;
+        }
+
+        .feature {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+            transition: transform 0.15s, border-color 0.15s;
+        }
+
+        .feature:hover {
+            transform: translateY(-3px);
+            border-color: var(--accent-purple);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.75rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 1rem;
+            text-decoration: none;
+            transition: all 0.15s;
+        }
+
+        .btn-primary {
+            background: var(--accent-purple);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #7c3aed;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        footer a {
+            color: var(--accent-purple);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 600px) {
+            h1 { font-size: 2rem; }
+            .hero { padding: 2rem 1rem; }
+            .cta-buttons { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="hero">
+            <div class="hero-icon">🤖</div>
+            <h1>RAPP Desktop</h1>
+            <p class="tagline">Rapid AI Agent Production Pipeline<br>Build production-ready AI agents in minutes</p>
+
+            <div class="cta-buttons">
+                <a href="https://github.com/kody-w/RAPP_Desktop" class="btn btn-primary">
+                    ⭐ View on GitHub
+                </a>
+                <a href="https://github.com/kody-w/RAPP_Store" class="btn btn-secondary">
+                    📦 RAPP Store
+                </a>
+                <a href="https://github.com/kody-w/RAPP_Hub" class="btn btn-secondary">
+                    🌐 RAPP Hub
+                </a>
+            </div>
+        </div>
+
+        <div class="install-section">
+            <h2><span class="platform-icon">🍎</span> macOS / Linux</h2>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyToClipboard(this, 'curl -fsSL https://raw.githubusercontent.com/kody-w/RAPP_Desktop/main/install/install.sh | bash')">Copy</button>
+                curl -fsSL https://raw.githubusercontent.com/kody-w/RAPP_Desktop/main/install/install.sh | bash
+            </div>
+            <p class="note">
+                <strong>Installs:</strong> Rust, Node.js, Python, and all dependencies automatically.
+            </p>
+        </div>
+
+        <div class="install-section">
+            <h2><span class="platform-icon">🪟</span> Windows</h2>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyToClipboard(this, 'irm https://raw.githubusercontent.com/kody-w/RAPP_Desktop/main/install/install.ps1 | iex')">Copy</button>
+                irm https://raw.githubusercontent.com/kody-w/RAPP_Desktop/main/install/install.ps1 | iex
+            </div>
+            <p class="note">
+                <strong>Run as Administrator</strong> in PowerShell for full installation.
+            </p>
+        </div>
+
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">💬</div>
+                <h3>Chat Interface</h3>
+                <p>Talk to your AI agents directly from the desktop app</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">📦</div>
+                <h3>Agent Store</h3>
+                <p>Browse and install agents from the RAPP Store</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🌐</div>
+                <h3>WhatsApp Bridge</h3>
+                <p>Control your agents via WhatsApp messages</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🔧</div>
+                <h3>GUID Routing</h3>
+                <p>One endpoint, multiple agents via intelligent routing</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🧠</div>
+                <h3>Persistent Memory</h3>
+                <p>Agents remember context across sessions</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">☁️</div>
+                <h3>Azure Integration</h3>
+                <p>Deploy to Azure with one-click setup</p>
+            </div>
+        </div>
+
+        <div class="install-section">
+            <h2><span class="platform-icon">📱</span> WhatsApp Setup</h2>
+            <p style="margin-bottom: 1rem;">Chat with RAPP from your phone via WhatsApp:</p>
+            <ol style="margin-left: 1.5rem; color: var(--text-secondary);">
+                <li>Create a <a href="https://developers.facebook.com/apps/" style="color: var(--accent-cyan);">Meta Developer App</a></li>
+                <li>Set up WhatsApp Business API</li>
+                <li>Run: <code style="background: var(--bg-tertiary); padding: 0.2rem 0.5rem; border-radius: 0.25rem;">rapp --whatsapp-setup</code></li>
+                <li>Enter your Phone Number ID and Access Token</li>
+                <li>Configure webhook URL in Meta Developer Console</li>
+            </ol>
+        </div>
+    </div>
+
+    <footer>
+        <p>
+            Made with ❤️ by the <a href="https://github.com/kody-w">RAPP Team</a><br>
+            <a href="https://github.com/kody-w/RAPP_Desktop/issues">Report an Issue</a> •
+            <a href="https://github.com/kody-w/RAPP_Desktop/blob/main/LICENSE">License</a>
+        </p>
+    </footer>
+
+    <script>
+        function copyToClipboard(btn, text) {
+            navigator.clipboard.writeText(text).then(() => {
+                btn.textContent = 'Copied!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = 'Copy';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
