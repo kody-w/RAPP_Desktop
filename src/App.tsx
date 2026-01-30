@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { invoke } from '@tauri-apps/api/tauri'
 
-type Page = 'home' | 'store' | 'hub' | 'projects' | 'settings'
+type Page = 'home' | 'chat' | 'store' | 'hub' | 'projects' | 'settings'
 
 interface Agent {
   id: string; name: string; description: string; version: string;
@@ -22,6 +22,28 @@ interface Project {
   name: string; path: string; created: string;
 }
 
+interface RappOsStatus {
+  running: boolean;
+  port: number;
+  endpoint: string;
+}
+
+interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
+  agentsUsed?: string[];
+}
+
+interface ChatResponse {
+  response: string;
+  voice_response?: string;
+  agent_logs: string[];
+  agents_used: string[];
+  session_guid: string;
+  context_guid: string;
+}
+
 export default function App() {
   const [page, setPage] = useState<Page>('home')
   const [agents, setAgents] = useState<Agent[]>([])
@@ -33,9 +55,22 @@ export default function App() {
   const [showNewProject, setShowNewProject] = useState(false)
   const [newProjectName, setNewProjectName] = useState('')
 
+  // RAPP OS state
+  const [rappOsStatus, setRappOsStatus] = useState<RappOsStatus>({ running: false, port: 7071, endpoint: '' })
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
+  const [chatInput, setChatInput] = useState('')
+  const [sessionGuid, setSessionGuid] = useState('')
+  const [chatLoading, setChatLoading] = useState(false)
+  const chatEndRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
     loadProjects()
+    checkRappOsStatus()
   }, [])
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [chatMessages])
 
   useEffect(() => {
     if (page === 'store') loadStore()
@@ -110,6 +145,90 @@ export default function App() {
     await invoke('open_path', { path })
   }
 
+  // RAPP OS functions
+  async function checkRappOsStatus() {
+    try {
+      const status = await invoke<RappOsStatus>('get_rapp_os_status')
+      setRappOsStatus(status)
+    } catch (e) {
+      setRappOsStatus({ running: false, port: 7071, endpoint: '' })
+    }
+  }
+
+  async function startRappOs() {
+    try {
+      const status = await invoke<RappOsStatus>('start_rapp_os')
+      setRappOsStatus(status)
+    } catch (e) {
+      alert(`Error starting RAPP OS: ${e}`)
+    }
+  }
+
+  async function stopRappOs() {
+    try {
+      const status = await invoke<RappOsStatus>('stop_rapp_os')
+      setRappOsStatus(status)
+    } catch (e) {
+      alert(`Error stopping RAPP OS: ${e}`)
+    }
+  }
+
+  async function sendMessage() {
+    if (!chatInput.trim() || chatLoading) return
+
+    const userMessage: ChatMessage = {
+      role: 'user',
+      content: chatInput.trim(),
+      timestamp: new Date()
+    }
+
+    setChatMessages(prev => [...prev, userMessage])
+    setChatInput('')
+    setChatLoading(true)
+
+    try {
+      const response = await invoke<ChatResponse>('chat_with_rapp', {
+        request: {
+          user_input: userMessage.content,
+          user_guid: 'desktop',
+          session_guid: sessionGuid || null,
+          context_guid: 'default',
+          conversation_history: chatMessages.map(m => ({
+            role: m.role,
+            content: m.content
+          }))
+        }
+      })
+
+      if (response.session_guid) {
+        setSessionGuid(response.session_guid)
+      }
+
+      const assistantMessage: ChatMessage = {
+        role: 'assistant',
+        content: response.response,
+        timestamp: new Date(),
+        agentsUsed: response.agents_used
+      }
+
+      setChatMessages(prev => [...prev, assistantMessage])
+    } catch (e) {
+      const errorMessage: ChatMessage = {
+        role: 'assistant',
+        content: `Error: ${e}. Make sure RAPP OS is running.`,
+        timestamp: new Date()
+      }
+      setChatMessages(prev => [...prev, errorMessage])
+    }
+
+    setChatLoading(false)
+  }
+
+  function clearChat() {
+    setChatMessages([])
+    setSessionGuid('')
+  }
+
   const filteredAgents = agents.filter(a =>
     a.name.toLowerCase().includes(search.toLowerCase()) ||
     a.description.toLowerCase().includes(search.toLowerCase())
@@ -133,6 +252,10 @@ export default function App() {
         <nav className="nav">
           <button className={`nav-item ${page === 'home' ? 'active' : ''}`} onClick={() => setPage('home')}>
             <span className="nav-icon">🏠</span> Home
+          </button>
+          <button className={`nav-item ${page === 'chat' ? 'active' : ''}`} onClick={() => setPage('chat')}>
+            <span className="nav-icon">💬</span> Chat
+            {rappOsStatus.running && <span className="status-dot online" />}
           </button>
           <button className={`nav-item ${page === 'store' ? 'active' : ''}`} onClick={() => setPage('store')}>
             <span className="nav-icon">📦</span> Store
@@ -159,6 +282,11 @@ export default function App() {
                 <h2>Rapid AI Agent Production Pipeline</h2>
                 <p>Build production-ready AI agents in minutes</p>
                 <div className="quick-actions">
+                  <div className="quick-action" onClick={() => setPage('chat')}>
+                    <div className="quick-action-icon">💬</div>
+                    <h4>Chat with RAPP</h4>
+                    <p>Talk to your agents</p>
+                  </div>
                   <div className="quick-action" onClick={() => setPage('store')}>
                     <div className="quick-action-icon">📦</div>
                     <h4>Browse Store</h4>
@@ -189,6 +317,87 @@ export default function App() {
                   <div className="stat-value">{skills.length || '—'}</div>
                   <div className="stat-label">Skills</div>
                 </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {page === 'chat' && (
+          <>
+            <header className="header">
+              <h2>Chat with RAPP</h2>
+              <div className="header-actions">
+                <span className={`status-badge ${rappOsStatus.running ? 'online' : 'offline'}`}>
+                  {rappOsStatus.running ? 'RAPP OS Running' : 'RAPP OS Stopped'}
+                </span>
+                {rappOsStatus.running ? (
+                  <button className="btn btn-secondary" onClick={stopRappOs}>Stop</button>
+                ) : (
+                  <button className="btn btn-primary" onClick={startRappOs}>Start RAPP OS</button>
+                )}
+                <button className="btn btn-secondary" onClick={clearChat}>Clear Chat</button>
+              </div>
+            </header>
+            <div className="chat-container">
+              <div className="chat-messages">
+                {chatMessages.length === 0 ? (
+                  <div className="chat-empty">
+                    <div className="chat-empty-icon">💬</div>
+                    <h3>Start a Conversation</h3>
+                    <p>
+                      {rappOsStatus.running
+                        ? 'Type a message below to chat with your RAPP agents'
+                        : 'Click "Start RAPP OS" above to begin'}
+                    </p>
+                  </div>
+                ) : (
+                  chatMessages.map((msg, i) => (
+                    <div key={i} className={`chat-message ${msg.role}`}>
+                      <div className="chat-message-header">
+                        <span className="chat-avatar">{msg.role === 'user' ? '👤' : '🤖'}</span>
+                        <span className="chat-sender">{msg.role === 'user' ? 'You' : 'RAPP'}</span>
+                        <span className="chat-time">
+                          {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <div className="chat-message-content">{msg.content}</div>
+                      {msg.agentsUsed && msg.agentsUsed.length > 0 && (
+                        <div className="chat-agents-used">
+                          Agents: {msg.agentsUsed.join(', ')}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+                {chatLoading && (
+                  <div className="chat-message assistant">
+                    <div className="chat-message-header">
+                      <span className="chat-avatar">🤖</span>
+                      <span className="chat-sender">RAPP</span>
+                    </div>
+                    <div className="chat-message-content typing">
+                      <span></span><span></span><span></span>
+                    </div>
+                  </div>
+                )}
+                <div ref={chatEndRef} />
+              </div>
+              <div className="chat-input-container">
+                <input
+                  className="chat-input"
+                  value={chatInput}
+                  onChange={e => setChatInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
+                  placeholder={rappOsStatus.running ? "Type your message..." : "Start RAPP OS to chat..."}
+                  disabled={!rappOsStatus.running || chatLoading}
+                />
+                <button
+                  className="btn btn-primary chat-send"
+                  onClick={sendMessage}
+                  disabled={!rappOsStatus.running || chatLoading || !chatInput.trim()}
+                >
+                  Send
+                </button>
               </div>
             </div>
           </>
@@ -340,6 +549,31 @@ export default function App() {
           <>
             <header className="header"><h2>Settings</h2></header>
             <div className="content">
+              <div className="card" style={{ maxWidth: 500, marginBottom: '1rem' }}>
+                <h3 style={{ marginBottom: '1rem' }}>RAPP OS</h3>
+                <div className="settings-row">
+                  <div>
+                    <strong>Status:</strong>{' '}
+                    <span className={`status-badge ${rappOsStatus.running ? 'online' : 'offline'}`}>
+                      {rappOsStatus.running ? 'Running' : 'Stopped'}
+                    </span>
+                  </div>
+                  {rappOsStatus.running && (
+                    <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                      Endpoint: {rappOsStatus.endpoint}
+                    </div>
+                  )}
+                </div>
+                <div className="card-actions" style={{ marginTop: '1rem' }}>
+                  {rappOsStatus.running ? (
+                    <button className="btn btn-secondary" onClick={stopRappOs}>Stop RAPP OS</button>
+                  ) : (
+                    <button className="btn btn-primary" onClick={startRappOs}>Start RAPP OS</button>
+                  )}
+                  <button className="btn btn-secondary" onClick={checkRappOsStatus}>Refresh Status</button>
+                </div>
+              </div>
+
               <div className="card" style={{ maxWidth: 500 }}>
                 <h3 style={{ marginBottom: '1rem' }}>RAPP Configuration</h3>
                 <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
