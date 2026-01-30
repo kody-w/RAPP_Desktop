@@ -7,7 +7,8 @@
 
 $ErrorActionPreference = "Stop"
 
-$RAPP_VERSION = $env:RAPP_VERSION ?? "latest"
+# PowerShell 5.x compatible null coalescing
+$RAPP_VERSION = if ($env:RAPP_VERSION) { $env:RAPP_VERSION } else { "latest" }
 $RAPP_HOME = "$env:USERPROFILE\.rapp"
 $RAPP_INSTALL_DIR = "$RAPP_HOME\app"
 
