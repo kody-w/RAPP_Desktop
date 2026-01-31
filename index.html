@@ -1,12 +1,717 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>RAPP Desktop</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAPP Desktop - Local Agent Dashboard</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🖥️</text></svg>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --secondary: #6366f1;
+            --accent: #f59e0b;
+            --background: #0a0a0f;
+            --surface: #111118;
+            --surface-light: #1a1a24;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #2d2d3d;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--background);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 60px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem 0;
+            gap: 0.5rem;
+        }
+
+        .sidebar-logo {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+        }
+
+        .sidebar-btn {
+            width: 44px;
+            height: 44px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar-btn:hover, .sidebar-btn.active {
+            background: var(--surface-light);
+            color: var(--primary);
+        }
+
+        .sidebar-spacer { flex: 1; }
+
+        /* Main content */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.3rem 0.75rem;
+            background: var(--surface-light);
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--error);
+        }
+
+        .status-dot.connected { background: var(--success); }
+        .status-dot.warning { background: var(--warning); }
+
+        /* Content area */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+
+        /* Panels */
+        .panel-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .panel-title {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .panel-title i { color: var(--primary); }
+
+        .panel-body { padding: 1rem; }
+
+        /* Config panel */
+        .config-form { display: flex; flex-direction: column; gap: 1rem; }
+
+        .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+
+        .form-group label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .form-group input {
+            padding: 0.75rem;
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:hover { background: var(--primary-dark); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-secondary {
+            background: var(--surface-light);
+            color: var(--text);
+        }
+
+        .btn-secondary:hover { background: var(--border); }
+
+        /* World tick panel */
+        .tick-display {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .tick-number {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--primary);
+            line-height: 1;
+        }
+
+        .tick-meta {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .tick-stat {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tick-stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .tick-stat-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        /* Chat panel */
+        .chat-container {
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .chat-message {
+            max-width: 85%;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .chat-message.user {
+            background: var(--primary);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .chat-message.assistant {
+            background: var(--surface-light);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-message.system {
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            text-align: center;
+            align-self: center;
+        }
+
+        .chat-input-container {
+            padding: 1rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 0.95rem;
+            resize: none;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* Agents list */
+        .agents-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .agent-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--surface-light);
+            border-radius: 8px;
+        }
+
+        .agent-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--background);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--secondary);
+        }
+
+        .agent-info { flex: 1; }
+        .agent-name { font-weight: 500; }
+        .agent-desc { font-size: 0.8rem; color: var(--text-muted); }
+
+        .agent-status {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            background: var(--success);
+            color: white;
+        }
+
+        /* Empty states */
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            opacity: 0.5;
+        }
+
+        /* Footer */
+        .footer {
+            padding: 0.75rem 1.5rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-logo">🖥️</div>
+        <button class="sidebar-btn active" title="Dashboard" data-view="dashboard"><i class="fas fa-th-large"></i></button>
+        <button class="sidebar-btn" title="Chat" data-view="chat"><i class="fas fa-comments"></i></button>
+        <button class="sidebar-btn" title="Agents" data-view="agents"><i class="fas fa-robot"></i></button>
+        <button class="sidebar-btn" title="RAPPzoo" data-view="zoo"><i class="fas fa-paw"></i></button>
+        <div class="sidebar-spacer"></div>
+        <button class="sidebar-btn" title="Settings" data-view="settings"><i class="fas fa-cog"></i></button>
+    </nav>
+
+    <!-- Main -->
+    <main class="main">
+        <header class="header">
+            <h1><i class="fas fa-terminal"></i> RAPP Desktop</h1>
+            <div class="status-badge">
+                <span class="status-dot" id="api-status"></span>
+                <span id="api-status-text">Not configured</span>
+            </div>
+        </header>
+
+        <div class="content" id="content">
+            <!-- Dashboard View (default) -->
+            <div id="view-dashboard">
+                <div class="panel-grid">
+                    <!-- Config Panel -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <span class="panel-title"><i class="fas fa-plug"></i> API Connection</span>
+                        </div>
+                        <div class="panel-body">
+                            <form class="config-form" id="config-form">
+                                <div class="form-group">
+                                    <label>Azure Function URL</label>
+                                    <input type="url" id="api-url" placeholder="https://your-app.azurewebsites.net/api/businessinsightbot_function" />
+                                </div>
+                                <div class="form-group">
+                                    <label>Function Key (optional)</label>
+                                    <input type="password" id="api-key" placeholder="Your function key" />
+                                </div>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <button type="submit" class="btn">Connect</button>
+                                    <button type="button" class="btn btn-secondary" id="test-btn">Test</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- World Tick Panel -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <span class="panel-title"><i class="fas fa-heartbeat"></i> RAPPzoo Live</span>
+                            <button class="btn btn-secondary" style="padding: 0.4rem 0.75rem; font-size: 0.8rem;" id="refresh-tick">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                        <div class="panel-body">
+                            <div class="tick-display" id="tick-display">
+                                <div class="empty-state">
+                                    <i class="fas fa-clock"></i>
+                                    <p>Loading world state...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Chat -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title"><i class="fas fa-bolt"></i> Quick Chat</span>
+                    </div>
+                    <div class="panel-body" style="padding: 0;">
+                        <div class="chat-container">
+                            <div class="chat-messages" id="chat-messages">
+                                <div class="chat-message system">Configure your API to start chatting</div>
+                            </div>
+                            <div class="chat-input-container">
+                                <input type="text" class="chat-input" id="chat-input" placeholder="Type a message..." disabled />
+                                <button class="btn" id="chat-send" disabled><i class="fas fa-paper-plane"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Agents View -->
+            <div id="view-agents" style="display: none;">
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title"><i class="fas fa-robot"></i> Installed Agents</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="agents-list" id="agents-list">
+                            <div class="empty-state">
+                                <i class="fas fa-robot"></i>
+                                <p>Connect to your API to see available agents</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings View -->
+            <div id="view-settings" style="display: none;">
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title"><i class="fas fa-cog"></i> Settings</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="form-group">
+                            <label>User GUID (for session persistence)</label>
+                            <input type="text" id="user-guid" placeholder="Auto-generated" />
+                        </div>
+                        <div style="margin-top: 1rem;">
+                            <button class="btn btn-secondary" id="clear-storage">Clear Local Storage</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <span>RAPP Desktop v1.0</span>
+            <a href="https://kody-w.github.io/RAPPsquared/" target="_blank">Open RAPPsquare <i class="fas fa-external-link-alt"></i></a>
+        </footer>
+    </main>
+
+    <script>
+        // State
+        let config = JSON.parse(localStorage.getItem('rapp-desktop-config') || '{}');
+        let userGuid = localStorage.getItem('rapp-user-guid') || generateGuid();
+        let conversationHistory = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadConfig();
+            loadWorldTick();
+            initNavigation();
+            initChat();
+            document.getElementById('user-guid').value = userGuid;
+        });
+
+        function generateGuid() {
+            const guid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+                const r = Math.random() * 16 | 0;
+                return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+            });
+            localStorage.setItem('rapp-user-guid', guid);
+            return guid;
+        }
+
+        // Navigation
+        function initNavigation() {
+            document.querySelectorAll('.sidebar-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const view = btn.dataset.view;
+                    if (!view) return;
+
+                    document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+
+                    document.querySelectorAll('[id^="view-"]').forEach(v => v.style.display = 'none');
+                    const viewEl = document.getElementById(`view-${view}`);
+                    if (viewEl) viewEl.style.display = 'block';
+                });
+            });
+        }
+
+        // Config
+        function loadConfig() {
+            if (config.apiUrl) {
+                document.getElementById('api-url').value = config.apiUrl;
+                document.getElementById('api-key').value = config.apiKey || '';
+                updateConnectionStatus(true);
+                enableChat();
+            }
+        }
+
+        document.getElementById('config-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            config.apiUrl = document.getElementById('api-url').value;
+            config.apiKey = document.getElementById('api-key').value;
+            localStorage.setItem('rapp-desktop-config', JSON.stringify(config));
+            updateConnectionStatus(true);
+            enableChat();
+        });
+
+        document.getElementById('test-btn').addEventListener('click', async () => {
+            const url = document.getElementById('api-url').value;
+            if (!url) return alert('Enter an API URL first');
+
+            try {
+                updateConnectionStatus('testing');
+                const response = await callAPI('ping');
+                updateConnectionStatus(true);
+                alert('Connection successful!');
+            } catch (e) {
+                updateConnectionStatus(false);
+                alert('Connection failed: ' + e.message);
+            }
+        });
+
+        function updateConnectionStatus(status) {
+            const dot = document.getElementById('api-status');
+            const text = document.getElementById('api-status-text');
+
+            if (status === 'testing') {
+                dot.className = 'status-dot warning';
+                text.textContent = 'Testing...';
+            } else if (status === true) {
+                dot.className = 'status-dot connected';
+                text.textContent = 'Connected';
+            } else {
+                dot.className = 'status-dot';
+                text.textContent = 'Disconnected';
+            }
+        }
+
+        // World Tick
+        async function loadWorldTick() {
+            try {
+                const response = await fetch('https://raw.githubusercontent.com/kody-w/CommunityRAPP/main/rappzoo/world/current_tick.json');
+                const tick = await response.json();
+
+                document.getElementById('tick-display').innerHTML = `
+                    <div class="tick-number">Tick #${tick.tick || 1}</div>
+                    <div class="tick-meta">
+                        <div class="tick-stat">
+                            <span class="tick-stat-label">Time</span>
+                            <span class="tick-stat-value">${tick.world?.time_of_day || 'Unknown'}</span>
+                        </div>
+                        <div class="tick-stat">
+                            <span class="tick-stat-label">Weather</span>
+                            <span class="tick-stat-value">${tick.world?.weather || 'Clear'}</span>
+                        </div>
+                        <div class="tick-stat">
+                            <span class="tick-stat-label">Crowd</span>
+                            <span class="tick-stat-value">${tick.crowd?.population?.toLocaleString() || '0'}</span>
+                        </div>
+                        <div class="tick-stat">
+                            <span class="tick-stat-label">Molts</span>
+                            <span class="tick-stat-value">${tick.molt_count || 0}</span>
+                        </div>
+                    </div>
+                `;
+            } catch (e) {
+                document.getElementById('tick-display').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Could not load world state</p>
+                    </div>
+                `;
+            }
+        }
+
+        document.getElementById('refresh-tick').addEventListener('click', loadWorldTick);
+
+        // Chat
+        function initChat() {
+            const input = document.getElementById('chat-input');
+            const sendBtn = document.getElementById('chat-send');
+
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            sendBtn.addEventListener('click', sendMessage);
+        }
+
+        function enableChat() {
+            document.getElementById('chat-input').disabled = false;
+            document.getElementById('chat-send').disabled = false;
+            addMessage('system', 'Connected! You can now chat with your RAPP agent.');
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            input.value = '';
+            addMessage('user', message);
+
+            try {
+                const response = await callAPI(message);
+                addMessage('assistant', response.assistant_response || response.message || 'No response');
+            } catch (e) {
+                addMessage('system', 'Error: ' + e.message);
+            }
+        }
+
+        function addMessage(type, text) {
+            const container = document.getElementById('chat-messages');
+            const msg = document.createElement('div');
+            msg.className = `chat-message ${type}`;
+            msg.textContent = text;
+            container.appendChild(msg);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function callAPI(message) {
+            if (!config.apiUrl) throw new Error('API not configured');
+
+            let url = config.apiUrl;
+            if (config.apiKey) url += `?code=${config.apiKey}`;
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_input: message,
+                    conversation_history: conversationHistory,
+                    user_guid: userGuid
+                })
+            });
+
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+            const data = await response.json();
+            conversationHistory.push({ role: 'user', content: message });
+            conversationHistory.push({ role: 'assistant', content: data.assistant_response });
+            return data;
+        }
+
+        // Settings
+        document.getElementById('clear-storage').addEventListener('click', () => {
+            if (confirm('Clear all local storage?')) {
+                localStorage.clear();
+                location.reload();
+            }
+        });
+    </script>
+</body>
 </html>
