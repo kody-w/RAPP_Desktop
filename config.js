@@ -10,9 +10,15 @@ window.RAPP_CONFIG = Object.assign({
     // RAPPzoo live tick data (public, no auth required)
     RAPPZOO_TICK: 'https://raw.githubusercontent.com/kody-w/CommunityRAPP/main/rappzoo/world/current_tick.json',
 
-    // RAPP API endpoint - set via Connect modal or config.local.js
+    // Demo API endpoint (GitHub raw - works without backend)
+    RAPP_API_DEMO: 'https://raw.githubusercontent.com/kody-w/CommunityRAPP/main/api-demo/responses/',
+
+    // Live RAPP API endpoint - set via Connect modal or config.local.js
     RAPP_API: null,
 
     // API key - set via Connect modal or config.local.js
-    RAPP_API_KEY: null
+    RAPP_API_KEY: null,
+
+    // Mode: 'demo' (default) or 'live' (when RAPP_API is configured)
+    MODE: 'demo'
 }, window.RAPP_LOCAL_CONFIG || {});
