@@ -1,5 +1,9 @@
 # RAPP Desktop
 
+<!-- rapp1:network-header:start -->
+[![RAPP/1](https://kody-w.github.io/rapp-hive-public/portfolio/badges/RAPP_Desktop.svg)](https://github.com/kody-w/rapp-hive-public/blob/main/portfolio/repos/RAPP_Desktop.md) · **New to RAPP?** [Start here: get your Brainstem →](https://github.com/kody-w/rapp-installer#start-here)
+<!-- rapp1:network-header:end -->
+
 Native desktop application for the RAPP ecosystem. Browse agents, install skills, clone implementations, and manage your AI projects - all from a beautiful native UI.
 
 ## Install
