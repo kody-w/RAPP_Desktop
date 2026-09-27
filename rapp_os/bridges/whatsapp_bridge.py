@@ -113,6 +113,9 @@ class WhatsAppBridge:
         # Normalize number (remove spaces, dashes, ensure + prefix)
         number = number.replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
         if not number.startswith("+"):
+            # Bare 10-digit numbers are assumed to be US/Canada (+1)
+            if len(number) == 10 and number.isdigit():
+                number = "1" + number
             number = "+" + number
 
         if number not in self.allowed_numbers:
